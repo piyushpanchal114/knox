@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'corsheaders',
+    'django_celery_results',
 
     "core",
 ]
@@ -140,3 +141,26 @@ REST_FRAMEWORK = {
 
 LOGIN_REDIRECT_URL = '/api/profile/'
 LOGOUT_REDIRECT_URL = '/api/auth/login/'
+
+
+# Celery Configuration
+CELERY_BROKER_URL = "redis://:devtoolssecret@redis:6379"
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'django-cache'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Celery Beat Schedule
+CELERY_BEAT_SCHEDULE = {
+    'generate-invoices': {
+        'task': 'core.tasks.generate_invoices',
+        'schedule': crontab(hour=0, minute=0),  # Daily at midnight
+    },
+    'mark-overdue-invoices': {
+        'task': 'core.tasks.mark_overdue_invoices',
+        'schedule': crontab(hour=1, minute=0),  # Daily at 1 AM
+    },
+    'send-invoice-reminders': {
+        'task': 'core.tasks.send_invoice_reminders',
+        'schedule': crontab(hour=10, minute=0),  # Daily at 10 AM
+    },
+}
