@@ -1,8 +1,12 @@
+from django.db.models import Q
+from django.utils import timezone
+from rest_framework import status
 from rest_framework.generics import (RetrieveAPIView, ListAPIView,
-                                     CreateAPIView)
+                                     CreateAPIView, GenericAPIView)
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from .models import Plan
+from .models import Plan, Subscription
 from .serializers import (UserSerializer, PlanSerializer,
                           SubscriptionCreateSerializer)
 
@@ -32,3 +36,22 @@ class UserSubscriptionCreateAPIView(CreateAPIView):
         context = super().get_serializer_context()
         context.update({'user': self.request.user})
         return context
+
+
+class UserUnsubscribeAPIView(GenericAPIView):
+    """Cancel user's subscription."""
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        subscription = Subscription.objects.filter(
+            Q(end_date__gt=timezone.now()) | Q(end_date__isnull=True),
+            user=request.user, status='active').first()
+        if not subscription:
+            return Response(
+                {"message": "You do not have an active subscription"},
+                status=status.HTTP_400_BAD_REQUEST)
+        subscription.status = 'cancelled'
+        subscription.end_date = timezone.now()
+        subscription.save()
+        return Response({"message": "Your subscription has been cancelled"},
+                        status=status.HTTP_200_OK)
