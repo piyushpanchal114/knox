@@ -1,0 +1,41 @@
+services:
+  web:
+    build:
+      context: ./knox
+    command: >
+      sh -c "python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py init_admin &&
+      python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - 8001:8000
+    volumes:
+      - ./knox:/usr/src/app
+
+  celery-worker:
+    build:
+      context: ./knox
+    command: "celery --app knox worker -l INFO"
+    depends_on:
+      - web
+    volumes:
+      - ./knox:/usr/src/app
+
+  celery-beat:
+    build:
+      context: ./knox
+    command: "celery --app knox beat -l INFO"
+    depends_on:
+      - web
+    volumes:
+      - ./knox:/usr/src/knox
+ 
+  redis:
+    image: redis:6.2-alpine
+    command: redis-server --save 20 1 --loglevel warning --requirepass devtoolssecret
+    volumes:
+      - redis:/data
+
+volumes:
+  redis:
+    driver: local
