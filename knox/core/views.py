@@ -1,8 +1,10 @@
-from rest_framework.generics import RetrieveAPIView, ListAPIView
+from rest_framework.generics import (RetrieveAPIView, ListAPIView,
+                                     CreateAPIView)
 from rest_framework.permissions import IsAuthenticated
 
 from .models import Plan
-from .serializers import UserSerializer, PlanSerializer
+from .serializers import (UserSerializer, PlanSerializer,
+                          SubscriptionCreateSerializer)
 
 
 class ProfileRetrieveAPIView(RetrieveAPIView):
@@ -19,3 +21,14 @@ class PlanListAPIView(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PlanSerializer
     queryset = Plan.objects.filter(is_active=True)
+
+
+class UserSubscriptionCreateAPIView(CreateAPIView):
+    """Create user's subscription."""
+    permission_classes = [IsAuthenticated]
+    serializer_class = SubscriptionCreateSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({'user': self.request.user})
+        return context
