@@ -2,7 +2,7 @@ from django.db.models import Q
 from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework import serializers
-from .models import Plan, Subscription
+from .models import Plan, Subscription, Invoice
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -47,3 +47,30 @@ class SubscriptionCreateSerializer(serializers.Serializer):
         resp = super().to_representation(instance)
         resp['detail'] = "Subscribed successfully"
         return resp
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    """Serializer for Subscription model"""
+    plan = serializers.CharField(source='plan.name', read_only=True)
+    is_active = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Subscription
+        fields = ['id', 'plan', 'is_active', 'start_date', 'end_date']
+
+    def get_is_active(self, obj: Subscription):
+        if obj.status == 'active' and\
+             (obj.end_date is None or obj.end_date > timezone.now()):
+            return True
+        else:
+            return False
+
+
+class InvoiceListSerializer(serializers.ModelSerializer):
+    """Serializer for Invoice model"""
+    subscription = SubscriptionSerializer(read_only=True)
+
+    class Meta:
+        model = Invoice
+        fields = ['id', 'subscription', 'amount', 'issue_date', 'due_date',
+                  'paid_date', 'status']

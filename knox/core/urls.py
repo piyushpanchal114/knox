@@ -8,4 +8,6 @@ urlpatterns = [
          views.UserSubscriptionCreateAPIView.as_view(), name="subscribe"),
     path("unsubscribe/",
          views.UserUnsubscribeAPIView.as_view(), name="unsubscribe"),
+    path("invoices/",
+         views.UserInvoiceListAPIView.as_view(), name="invoices"),
 ]
