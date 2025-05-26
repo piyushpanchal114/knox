@@ -51,7 +51,7 @@ class Subscription(models.Model):
         self.save()
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['-start_date']
 
 
 class Invoice(models.Model):
