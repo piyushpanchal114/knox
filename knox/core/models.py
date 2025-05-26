@@ -22,7 +22,7 @@ class Plan(models.Model):
         return self.name
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['created_at']
 
 
 class Subscription(models.Model):
@@ -34,21 +34,13 @@ class Subscription(models.Model):
         Plan, on_delete=models.CASCADE, related_name='plan_subscriptions')
     status = models.CharField(
         max_length=20, choices=SUBSCRIPTION_STATUS_CHOICES, default='active')
-    start_date = models.DateTimeField(auto_now_add=True)
+    start_date = models.DateTimeField(default=timezone.now)
     end_date = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.plan.name}"
-
-    def is_active(self):
-        return self.status == 'active' and\
-            (not self.end_date or self.end_date > timezone.now())
-
-    def cancel(self):
-        self.status = 'cancelled'
-        self.end_date = timezone.now()
-        self.save()
 
     class Meta:
         ordering = ['-start_date']
@@ -61,7 +53,6 @@ class Invoice(models.Model):
         Subscription, on_delete=models.CASCADE, related_name='invoices')
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='invoices')
-    plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     issue_date = models.DateTimeField()
     due_date = models.DateTimeField()
@@ -73,14 +64,6 @@ class Invoice(models.Model):
 
     def __str__(self):
         return f"Invoice {self.id} - {self.user.username} - ${self.amount}"
-
-    def is_overdue(self):
-        return self.status == 'pending' and self.due_date < timezone.now()
-
-    def mark_paid(self):
-        self.status = 'paid'
-        self.paid_date = timezone.now()
-        self.save()
 
     class Meta:
         ordering = ['-created_at']
