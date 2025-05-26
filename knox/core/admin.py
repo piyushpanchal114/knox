@@ -14,5 +14,5 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('subscription', 'user', 'plan', 'amount', 'issue_date',
+    list_display = ('subscription', 'user', 'amount', 'issue_date',
                     'due_date', 'paid_date', 'status')
